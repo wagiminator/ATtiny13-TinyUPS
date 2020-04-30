@@ -1,4 +1,4 @@
-# TinyUPS - Uninterruptable Power Supply based on ATtiny13A
+# TinyUPS - Uninterruptible Power Supply based on ATtiny13A
 
 # Overview #
 
