@@ -31,6 +31,8 @@ The ATtiny13 spends most of the time in power-down sleep mode to save energy. Th
 
 Although it would be possible to supply the connected device via the battery and charge the battery at the same time, this is absolutely not a recommended way. In this case, most charging ICs such as the TP4056 are unable to determine whether the battery is fully charged. The battery would be charged forever, which would destroy it in the long run. A load sharing system was therefore integrated, which separates the battery from the load when an external power is present. While the battery is being charged, the connected device is powered by the external power supply. For more details on the working principle of the load sharing power path management circuit refer to http://ww1.microchip.com/downloads/en/appnotes/01149c.pdf.
 
+![tinyUPS.png](https://image.easyeda.com/pullimage/5MvU4xPhC5vmnXBHo8SEw7gdiCj2jHQTh1ALZBmU.png)
+
 # 3. Performance #
 
 External power supply should be capable of delivering enough power to charge the battery and to power the connected device simultaneously. The maximum battery charging current is set to 1000mA but you can set a lower limit by selecting a different value of R3. The output voltage of the external power supply must not exceed 5.2V! Choose a good 18650 Li-Ion battery with a low internal resistance which is capable of delivering up to 6A!
