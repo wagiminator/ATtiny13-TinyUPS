@@ -1,6 +1,6 @@
 # TinyUPS - Uninterruptible Power Supply based on ATtiny13A
 
-# Overview #
+# 1. Overview #
 
 TinyUPS is a simple 5V/2.5A uninterruptible power supply with a li-ion battery as a buffer, a load sharing power path management system and an ATtiny13 for monitoring power supply and battery charge level as well as for communication with the connected device.
 
@@ -8,7 +8,7 @@ TinyUPS is a simple 5V/2.5A uninterruptible power supply with a li-ion battery a
 ![IMG_20200429_085845_x.jpg](https://image.easyeda.com/pullimage/ehw9MdOgYZ1FBT7VzwjljH5wGpZlaYVFoSfBCoGl.jpeg)
 ![IMG_20200429_085907_x.jpg](https://image.easyeda.com/pullimage/kT6kqbDiSMt34Geqa3ajQAtOuR0XCEJVwFSN0zOP.jpeg)
 
-# Working Principle #
+# 2. Working Principle #
 
 If external power is connected to the tinyUPS the input voltage or vcc of the ATtiny13 is delivered by this source, otherwise by the battery. The ATtiny13 monitors the input voltage and tells the connected device to shutdown by pulling the SHUTDOWN-line low when the input voltage falls below a certain threshold (SHUTDOWNLEVEL). This happens when the external power source is diconnected or disabled and the battery level falls below this threshold. After waiting a certain time (SHUTDOWNTIMER) to allow the connected device to safely shut down, the ATtiny13 deactivates the boost converter and turns off the power to the connected device.
 If the input voltage rises again above a certain threshold (POWERONLEVEL) it activates the boost converter and turns on the power to the connected device. This happens when the external power source is available again.
@@ -31,7 +31,7 @@ The ATtiny13 spends most of the time in power-down sleep mode to save energy. Th
 
 Although it would be possible to supply the connected device via the battery and charge the battery at the same time, this is absolutely not a recommended way. In this case, most charging ICs such as the TP4056 are unable to determine whether the battery is fully charged. The battery would be charged forever, which would destroy it in the long run. A load sharing system was therefore integrated, which separates the battery from the load when an external power is present. While the battery is being charged, the connected device is powered by the external power supply. For more details on the working principle of the load sharing power path management circuit refer to http://ww1.microchip.com/downloads/en/appnotes/01149c.pdf.
 
-# Performance #
+# 3. Performance #
 
 External power supply should be capable of delivering enough power to charge the battery and to power the connected device simultaneously. The maximum battery charging current is set to 1000mA but you can set a lower limit by selecting a different value of R3. The output voltage of the external power supply must not exceed 5.2V! Choose a good 18650 Li-Ion battery with a low internal resistance which is capable of delivering up to 6A!
 
