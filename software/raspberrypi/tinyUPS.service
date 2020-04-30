@@ -1,0 +1,15 @@
+# tinyUPS - systemd configuration file
+ 
+[Unit]
+Description=TinyUPS Shutdown Controller
+Before=network.target
+After=umount.target
+ 
+[Service]
+Type=oneshot
+ExecStart=/opt/tinyUPS/tinyUPSshutdown.py
+ExecStop=/opt/tinyUPS/tinyUPSrequest.py
+RemainAfterExit=yes
+ 
+[Install]
+WantedBy=multi-user.target
