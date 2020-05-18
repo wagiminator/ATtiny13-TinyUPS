@@ -47,7 +47,8 @@
 // BOD:         disabled (to save energy)
 // Timing:      Micros disabled
 //
-// 2020 by Stefan Wagner
+// 2020 by Stefan Wagner (https://easyeda.com/wagiminator)
+// License: http://creativecommons.org/licenses/by-sa/3.0/
 
 
 // Libraries
