@@ -10,13 +10,15 @@ cd "`dirname "$0"`"
 echo "Create folder /opt/tinyUPS ..."
 sudo mkdir /opt/tinyUPS
 
-echo "Copy Python scripts to /opt/tinyUPS ..."
+echo "Copy scripts to /opt/tinyUPS ..."
 sudo cp tinyUPSshutdown.py /opt/tinyUPS
 sudo cp tinyUPSrequest.py /opt/tinyUPS
+sudo cp tinyUPSshutdown.sh /opt/tinyUPS
 
-echo "Make Python scripts executable ..."
-sudo chmod +x /opt/tinyUPS/tinyUPSshutdown.py
-sudo chmod +x /opt/tinyUPS/tinyUPSrequest.py
+echo "Make scripts executable ..."
+sudo chmod +rx /opt/tinyUPS/tinyUPSshutdown.py
+sudo chmod +rx /opt/tinyUPS/tinyUPSrequest.py
+sudo chmod +rx /opt/tinyUPS/tinyUPSshutdown.sh
 
 echo "Copy tinyUPS.service to /etc/systemd/system ..."
 sudo cp tinyUPS.service /etc/systemd/system

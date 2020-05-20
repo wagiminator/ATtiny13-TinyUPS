@@ -1,4 +1,8 @@
 # tinyUPS - systemd configuration file
+#
+# Put this file in /etc/systemd/system
+# then run "sudo systemctl enable tinyUPS.service"
+# Based on the description by the Baldengineer
  
 [Unit]
 Description=TinyUPS Shutdown Controller
@@ -7,7 +11,7 @@ After=umount.target
  
 [Service]
 Type=oneshot
-ExecStart=/opt/tinyUPS/tinyUPSshutdown.py
+ExecStart=/opt/tinyUPS/tinyUPSshutdown.sh
 ExecStop=/opt/tinyUPS/tinyUPSrequest.py
 RemainAfterExit=yes
  
