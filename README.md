@@ -58,7 +58,11 @@ External power supply should be capable of delivering enough power to charge the
 ![tinyUPS_extpwron.png](https://image.easyeda.com/pullimage/vAquKosg7Vafx468a0X0v73O01uWxJlmcDbXxqjH.png)
 ![tinyUPS_ripple.png](https://image.easyeda.com/pullimage/Oku4Ay6szQZlZ7JVQbMMSMXAQoVwiRxVshBPpwjk.png)
 
-# 4. License #
+# 4. Notes and Errors #
+- The EP plate of the FP6277 requires a good conductive connection to the corresponding plate on the PCB.
+- C2 (10u) and C3 (100n) are incorrectly interchanged on the PCB version v1.0. The board works anyway. PCB v1.1 fixes the bug.
+
+# 5. License #
 
 ![license.png](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)
 
