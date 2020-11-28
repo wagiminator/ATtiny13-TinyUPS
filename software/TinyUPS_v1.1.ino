@@ -42,7 +42,10 @@
 //                        +----+    
 //
 // Controller:  ATtiny13A
+// Core:        MicroCore (https://github.com/MCUdude/MicroCore)
 // Clockspeed:  1.2 MHz internal
+// BOD:         disabled (to save energy)
+// Timing:      Micros disabled
 //
 // 2020 by Stefan Wagner 
 // Project Files (EasyEDA): https://easyeda.com/wagiminator
@@ -50,22 +53,20 @@
 // License: http://creativecommons.org/licenses/by-sa/3.0/
 
 
-// libraries
-#include <avr/io.h>             // for gpio
+// Libraries
 #include <avr/sleep.h>          // for the sleep modes
 #include <avr/interrupt.h>      // for the interrupts
 #include <avr/power.h>          // for the power control
 #include <avr/wdt.h>            // for the watch dog timer
-#include <util/delay.h>         // for delays
 
-// pin definitions
+// Pin definitions
 #define SHUTDOWN  0             // when set high the SHUTDOWN line is pulled low
 #define REQUEST   1             // gets low on button pressed or REQ-line high
 #define SENSE     2             // voltage divider for measuring vcc
 #define LED       3             // status LED: on when high
 #define ENABLE    4             // enable pin of boost converter: on when high
 
-// control parameters
+// Control parameters
 #define SHUTDOWNLEVEL   3000    // supply voltage threshold in mV for auto shutdown
 #define USERPOWERLEVEL  3500    // supply voltage when user is allowed to power on  
 #define POWERONLEVEL    4300    // supply voltage threshold in mV for auto power on
@@ -73,26 +74,99 @@
 #define SHUTDOWNTIMER   30      // time in seconds the connected device needs to shut down
 #define REQUESTTIMER    20      // duration in 100ms request/button has to be low to shut down
 
-// watch dog timer intervals
-#define WDT1S   (1<<WDTIE)|(1<<WDP2)|(1<<WDP1)  // WDTCR value for 1 second
-#define WDT8S   (1<<WDTIE)|(1<<WDP3)|(1<<WDP0)  // WDTCR value for 8 seconds
+// Watch dog timer intervals
+#define WDT1S   bit(WDTIE)|bit(WDP2)|bit(WDP1)  // WDTCR value for 1 second
+#define WDT8S   bit(WDTIE)|bit(WDP3)|bit(WDP0)  // WDTCR value for 8 seconds
 
+// Global variables
+uint16_t  vcc;                  // stores the actual supply voltage mV
+uint8_t   gtimer;               // global timer variable
+bool      autopoweron = true;   // auto power-on flag
+
+
+void setup() {
+  // reset watchdog timer
+  resetWatchdog(WDT8S);                      // do this first in case WDT fires
+  
+  // setup pins
+  DDRB  = bit(LED) | bit(ENABLE) | bit(SHUTDOWN);  // set output pins
+  PORTB = bit(REQUEST);                            // set pull-ups
+
+  // setup pin change interrupt
+  GIMSK = bit(PCIE);                          // pin change interrupts enable
+  PCMSK = bit(REQUEST);                       // set pins for pin change interrupt
+
+  // setup ADC
+  ADCSRA  = bit(ADPS0) | bit(ADPS1);          // set ADC clock prescaler to 8
+  ADCSRA |= bit(ADIE);                        // ADC interrupts enable
+  interrupts();                               // enable global interrupts
+}
+
+void loop() {
+  // check if power has to be turned on
+  while(true) {
+    bitSet(PORTB, LED);                       // heartbeat on status LED
+    vcc = getVcc();                           // get supply voltage
+    if (autopoweron && (vcc >= POWERONLEVEL)) break;
+    if ( (!bitRead(PINB, REQUEST)) && (vcc >= USERPOWERLEVEL)) break;
+    bitClear(PORTB, LED);                     // turn off status LED again
+    sleep(WDT8S);                             // sleep for a while...
+  }
+
+  // turn on power
+  bitSet(PORTB, ENABLE);                      // set enable pin of boost converter
+  autopoweron = true;                         // assume auto power on by now
+  gtimer = (BOOTUPTIMER >> 3) + 1;            // set timer for bootup
+
+  // check if power has to be turned off
+  while(true) {
+    vcc = getVcc();                           // get battery voltage
+    if (vcc < SHUTDOWNLEVEL) break;           // shutdown when battery low
+    uint8_t counter = REQUESTTIMER;           // timer for manual shutdown
+    while( (!bitRead(PINB, REQUEST))  && (--counter)) delay(100);
+    if (!counter) {autopoweron = false; break;}
+    if (gtimer) gtimer--;                     // decrease boottimer
+    sleep(WDT8S);                             // sleep for a while...
+  }
+
+  // shut down sequence
+  GIMSK = 0;                                  // disable pin change interrupt
+  bitSet(PORTB, SHUTDOWN);                    // tell the device to shutdown now
+  gtimer = (gtimer << 3) + SHUTDOWNTIMER;     // set timer for shutdown
+  do {                                        // start timed sequence
+    PINB = bit(LED);                          // toggle LED
+    sleep(WDT1S);                             // sleep one second
+  } while (--gtimer);
+  bitClear(PORTB, SHUTDOWN);                  // release SHUTDOWN pin
+  GIMSK = bit(PCIE);                          // pin change interrupts enable
+
+  // turn off power
+  bitClear(PORTB, ENABLE);                    // disable boost converter
+}
 
 // get supply voltage in mV by reading it via voltage divider against 1.1V reference
 uint16_t getVcc() {
   uint16_t result = 0;                  // result
-  ADCSRA |= (1<<ADEN)|(1<<ADIF);        // enable ADC, turn off any pending interrupt
-  ADMUX   = (1<<REFS0)|(1<<MUX0);       // set ADC1 against 1.1V reference
-  _delay_ms(2);                         // wait for Vref to settle
-  set_sleep_mode (SLEEP_MODE_ADC);      // sleep during sample for noise reduction
+  ADCSRA |= bit(ADEN)  | bit(ADIF);     // enable ADC, turn off any pending interrupt
+  ADMUX   = bit(REFS0) | bit(MUX0);     // set ADC1 against 1.1V reference
+  delay(2);                             // wait for Vref to settle
+  set_sleep_mode(SLEEP_MODE_ADC);       // sleep during sample for noise reduction
   for (uint8_t i=21; i; i--) {          // get 21 samples
     sleep_mode();                       // go to sleep while taking ADC sample
-    while (ADCSRA & (1<<ADSC));         // make sure sampling is completed
+    while (bitRead(ADCSRA, ADSC));      // make sure sampling is completed
     result += ADC;                      // add them up
   }
-  ADCSRA &= ~(1<<ADEN);                 // disable ADC to save energy
+  bitClear(ADCSRA, ADEN);               // disable ADC to save energy
   result >>= 2;                         // divide by 4 (21/4 ~ 1100mV*(R17+R18)/R17/1023)
   return result;                        // return supply voltage in mV
+}
+
+// go to sleep in order to save energy, wake up again by watchdog timer or pin change interrupt
+void sleep(uint8_t WDTtime) {
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);  // set sleep mode to power down
+  GIFR |= (1<<PCIF);                    // clear any outstanding interrupts
+  resetWatchdog(WDTtime);               // get watchdog ready
+  sleep_mode();                         // sleep
 }
 
 // reset watchdog timer
@@ -105,88 +179,13 @@ void resetWatchdog (uint8_t WDTtime) {
   sei();                                // interrupts are required now
 }
 
-// go to sleep in order to save energy, wake up again by watchdog timer or pin change interrupt
-void sleep(uint8_t WDTtime) {
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);  // set sleep mode to power down
-  GIFR |= (1<<PCIF);                    // clear any outstanding interrupts
-  resetWatchdog(WDTtime);               // get watchdog ready
-  sleep_mode();                         // sleep
-}
-
-// main function
-int main(void) {
-  // local variables
-  uint16_t  vcc;                              // stores the actual supply voltage mV
-  uint8_t   gtimer;                           // global timer variable
-  uint8_t   autopoweron = 1;                  // auto power-on flag
-
-  // reset watchdog timer
-  resetWatchdog (WDT8S);                      // do this first in case WDT fires
-  
-  // setup pins
-  DDRB  = (1<<LED)|(1<<ENABLE)|(1<<SHUTDOWN); // set output pins
-  PORTB = (1<<REQUEST);                       // set pull-ups
-
-  // setup pin change interrupt
-  GIMSK = (1<<PCIE);                          // pin change interrupts enable
-  PCMSK = (1<<REQUEST);                       // set pins for pin change interrupt
-
-  // setup ADC
-  ADCSRA  = (1<<ADPS0)|(1<<ADPS1);            // set ADC clock prescaler to 8
-  ADCSRA |= (1<<ADIE);                        // ADC interrupts enable
-  sei();                                      // enable global interrupts
-
-  // main loop
-  while(1) {
-    // check if power has to be turned on
-    while(1) {
-      PORTB |= (1<<LED);                      // heartbeat on status LED
-      vcc = getVcc();                         // get supply voltage
-      if (autopoweron && (vcc >= POWERONLEVEL)) break;
-      if ((~PINB & (1<<REQUEST)) && (vcc >= USERPOWERLEVEL)) break;
-      PORTB &= ~(1<<LED);                     // turn off status LED again
-      sleep(WDT8S);                           // sleep for a while...
-    }
-
-    // turn on power
-    PORTB |= (1<<ENABLE);                     // set enable pin of boost converter
-    autopoweron = 1;                          // assume auto power on by now
-    gtimer = (BOOTUPTIMER >> 3) + 1;          // set timer for bootup
-
-    // check if power has to be turned off
-    while(1) {
-      vcc = getVcc();                         // get battery voltage
-      if (vcc < SHUTDOWNLEVEL) break;         // shutdown when battery low
-      uint8_t counter = REQUESTTIMER;         // timer for manual shutdown
-      while((~PINB & (1<<REQUEST)) && (--counter)) _delay_ms(100);
-      if (!counter) {autopoweron = 0; break;}
-      if (gtimer) gtimer--;                   // decrease boottimer
-      sleep(WDT8S);                           // sleep for a while...
-    }
-
-    // shut down sequence
-    GIMSK = 0;                                // disable pin change interrupt
-    PORTB |= (1<<SHUTDOWN);                   // tell the device to shutdown now
-    gtimer = (gtimer << 3) + SHUTDOWNTIMER;   // set timer for shutdown
-    do {                                      // start timed sequence
-      PINB = (1<<LED);                        // toggle LED
-      sleep(WDT1S);                           // sleep one second
-    } while (--gtimer);
-    PORTB &= ~(1<<SHUTDOWN);                  // release SHUTDOWN pin
-    GIMSK = (1<<PCIE);                        // pin change interrupts enable
-
-    // turn off power
-    PORTB &= ~(1<<ENABLE);                    // disable boost converter
-  }
-}
-
 // watchdog interrupt service routine
 ISR (WDT_vect) {
-  wdt_disable();                              // disable watchdog
+  wdt_disable();                        // disable watchdog
 }
 
 // pin change interrupt service routine
-EMPTY_INTERRUPT (PCINT0_vect);                // nothing to be done here
+EMPTY_INTERRUPT (PCINT0_vect);          // nothing to be done here
 
 // ADC interrupt service routine
-EMPTY_INTERRUPT (ADC_vect);                   // nothing to be done here
+EMPTY_INTERRUPT (ADC_vect);             // nothing to be done here
