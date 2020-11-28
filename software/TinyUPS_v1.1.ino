@@ -86,18 +86,22 @@ bool      autopoweron = true;   // auto power-on flag
 
 void setup() {
   // reset watchdog timer
-  resetWatchdog(WDT8S);                      // do this first in case WDT fires
+  resetWatchdog(WDT8S);                       // do this first in case WDT fires
   
   // setup pins
-  DDRB  = bit(LED) | bit(ENABLE) | bit(SHUTDOWN);  // set output pins
-  PORTB = bit(REQUEST);                            // set pull-ups
+  DDRB  = bit(LED)|bit(ENABLE)|bit(SHUTDOWN); // set output pins
+  PORTB = bit(REQUEST);                       // set pull-ups
+
+  // disable unused peripherals to save power
+  ACSR   = (1<<ACD);                          // disable analog comperator
+  DIDR0 |= (1<<SENSE);                        // disable digital intput buffer on SENSE pin
 
   // setup pin change interrupt
   GIMSK = bit(PCIE);                          // pin change interrupts enable
   PCMSK = bit(REQUEST);                       // set pins for pin change interrupt
 
   // setup ADC
-  ADCSRA  = bit(ADPS0) | bit(ADPS1);          // set ADC clock prescaler to 8
+  ADCSRA  = bit(ADPS0)|bit(ADPS1);            // set ADC clock prescaler to 8
   ADCSRA |= bit(ADIE);                        // ADC interrupts enable
   interrupts();                               // enable global interrupts
 }

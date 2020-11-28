@@ -127,6 +127,10 @@ int main(void) {
   DDRB  = (1<<LED)|(1<<ENABLE)|(1<<SHUTDOWN); // set output pins
   PORTB = (1<<REQUEST);                       // set pull-ups
 
+  // disable unused peripherals to save power
+  ACSR   = (1<<ACD);                          // disable analog comperator
+  DIDR0 |= (1<<SENSE);                        // disable digital intput buffer on SENSE pin
+
   // setup pin change interrupt
   GIMSK = (1<<PCIE);                          // pin change interrupts enable
   PCMSK = (1<<REQUEST);                       // set pins for pin change interrupt
