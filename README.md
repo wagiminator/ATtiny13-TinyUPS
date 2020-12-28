@@ -98,32 +98,32 @@ The ATtiny13 spends most of the time in power-down sleep mode to save energy. Th
 
 // reset watchdog timer
 void resetWatchdog (uint8_t WDTtime) {
-  cli();                                // timed sequence coming up
-  MCUSR = 0;                            // clear various "reset" flags
-  WDTCR = (1<<WDCE)|(1<<WDE)|(1<<WDTIF);// allow changes, disable reset, clear existing interrupt
-  WDTCR = WDTtime;                      // set interval
-  wdt_reset();                          // pat the dog
-  sei();                                // interrupts are required now
+  cli();                                  // timed sequence coming up
+  MCUSR = 0;                              // clear various "reset" flags
+  WDTCR = (1<<WDCE)|(1<<WDE)|(1<<WDTIF);  // allow changes, disable reset, clear existing interrupt
+  WDTCR = WDTtime;                        // set interval
+  wdt_reset();                            // pat the dog
+  sei();                                  // interrupts are required now
 }
 
 // go to sleep in order to save energy, wake up again by watchdog timer or pin change interrupt
 void sleep(uint8_t WDTtime) {
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);  // set sleep mode to power down
-  GIFR |= (1<<PCIF);                    // clear any outstanding interrupts
-  resetWatchdog(WDTtime);               // get watchdog ready
-  sleep_mode();                         // sleep
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);    // set sleep mode to power down
+  GIFR |= (1<<PCIF);                      // clear any outstanding interrupts
+  resetWatchdog(WDTtime);                 // get watchdog ready
+  sleep_mode();                           // sleep
 }
 
 // watchdog interrupt service routine
 ISR (WDT_vect) {
-  wdt_disable();                              // disable watchdog
+  wdt_disable();                          // disable watchdog
 }
 
 // pin change interrupt service routine
-EMPTY_INTERRUPT (PCINT0_vect);                // nothing to be done here
+EMPTY_INTERRUPT (PCINT0_vect);            // nothing to be done here
 
 // ADC interrupt service routine
-EMPTY_INTERRUPT (ADC_vect);                   // nothing to be done here
+EMPTY_INTERRUPT (ADC_vect);               // nothing to be done here
 ```
 
 ## Compiling and Uploading
