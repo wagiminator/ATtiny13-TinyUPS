@@ -1,14 +1,16 @@
 # TinyUPS - Uninterruptible Power Supply based on ATtiny13A
 TinyUPS is a simple 5V/2.5A uninterruptible power supply with a li-ion battery as a buffer, a load sharing power path management system and an ATtiny13A for monitoring power supply and battery charge level as well as for communication with the connected device.
 
-![IMG_20200429_085806_x.jpg](https://image.easyeda.com/pullimage/2XsCuAdfqt9wIi8S0v06BNLV0mbNk2amUA6AiitS.jpeg)
-![IMG_20200429_085845_x.jpg](https://image.easyeda.com/pullimage/ehw9MdOgYZ1FBT7VzwjljH5wGpZlaYVFoSfBCoGl.jpeg)
-![IMG_20200429_085907_x.jpg](https://image.easyeda.com/pullimage/kT6kqbDiSMt34Geqa3ajQAtOuR0XCEJVwFSN0zOP.jpeg)
+- Design Files (EasyEDA): https://easyeda.com/wagiminator/attiny13-tinyups-smd
+
+![pic1.jpg](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_pic1.jpg)
+![pic2.jpg](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_pic2.jpg)
+![pic3.jpg](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_pic3.jpg)
 
 # Hardware
 The functional principle is shown in the following block diagram:
 
-![tinyUPS.png](https://image.easyeda.com/pullimage/5MvU4xPhC5vmnXBHo8SEw7gdiCj2jHQTh1ALZBmU.png)
+![block.png](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_block.png)
 
 ## Battery Charger
 For battery charging the [TP4056](https://datasheet.lcsc.com/szlcsc/1904031009_TPOWER-TP4056_C382139.pdf) is used. The TP4056 is a complete constant-current/constant-voltage linear charger for single cell lithium-ion batteries. The charge voltage is fixed at 4.2V and the charge current (max 1000mA) can be programmed externally with a single resistor (R3). The TP4056 automatically terminates the charge cycle when the charge current drops to 1/10th the programmed value after the final float voltage is reached. Other features include current monitor, under voltage lockout and automatic recharge.
@@ -211,12 +213,12 @@ The current status of the tinyUPS is indicated by 5 LEDs:
 |VOUT: on|output power is turned on|
 
 # Performance
-![tinyUPS_bat_efficiency.png](https://image.easyeda.com/pullimage/W959GNvB4wwInaBowrjAbtAAMT8vCeLyaqSE4I29.png)
-![tinyUPS_ext_efficiency_2.png](https://image.easyeda.com/pullimage/r1j2fOvBXxYUyLE3E1PBskUNkwubG3GuHiYs1wiT.png)
-![TP4056_charge_x.png](https://image.easyeda.com/pullimage/UNkHfqfx3ETdvMpiQEETEzMi013vV7Ha1eeUnqdU.png)
-![tinyUPS_extpwroff.png](https://image.easyeda.com/pullimage/bh1e51RDliqaCUedjc1ODjaZxg4zE4oq562P07h2.png)
-![tinyUPS_extpwron.png](https://image.easyeda.com/pullimage/vAquKosg7Vafx468a0X0v73O01uWxJlmcDbXxqjH.png)
-![tinyUPS_ripple.png](https://image.easyeda.com/pullimage/Oku4Ay6szQZlZ7JVQbMMSMXAQoVwiRxVshBPpwjk.png)
+![perf1.png](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_perf1.png)
+![perf2.png](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_perf2.png)
+![perf3.png](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_perf3.png)
+![scope1.png](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_scope1.png)
+![scope2.png](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_scope2.png)
+![scope3.png](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_scope3.png)
 
 # References, Links and Notes
 1. [ATtiny13A Datasheet](http://ww1.microchip.com/downloads/en/DeviceDoc/doc8126.pdf)
