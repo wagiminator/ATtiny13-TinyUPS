@@ -32,7 +32,7 @@ The [ATtiny13A](http://ww1.microchip.com/downloads/en/DeviceDoc/doc8126.pdf) is 
 The control parameters are defined at the beginning of the code and can be adapted to the needs of the user.
 
 ```c
-// control parameters
+// Control parameters
 #define SHUTDOWNLEVEL   3000    // supply voltage threshold in mV for auto shutdown
 #define USERPOWERLEVEL  3500    // supply voltage when user is allowed to power on  
 #define POWERONLEVEL    4300    // supply voltage threshold in mV for auto power on
@@ -45,48 +45,48 @@ If external power is connected to the tinyUPS the input voltage or vcc of the AT
 A shutdown can also be initiated by pressing and holding the button or by setting the REQUEST-line to high (>0.7V) for 2 seconds. After such shutdowns the power will not be turned on again automatically.
 
 ```c
-// check if power has to be turned off
+// Check if power has to be turned off
 while(1) {
   vcc = getVcc();                         // get battery voltage
   if (vcc < SHUTDOWNLEVEL) break;         // shutdown when battery low
   uint8_t counter = REQUESTTIMER;         // timer for manual shutdown
-  while((~PINB & (1<<REQUEST)) && (--counter)) _delay_ms(100);
+  while((!pinRead(REQUEST)) && (--counter)) _delay_ms(100);
   if (!counter) {autopoweron = 0; break;}
   if (gtimer) gtimer--;                   // decrease boottimer
   sleep(WDT8S);                           // sleep for a while...
 }
 
-// shut down sequence
+// Shut down sequence
 GIMSK = 0;                                // disable pin change interrupt
-PORTB |= (1<<SHUTDOWN);                   // tell the device to shutdown now
+pinHigh(SHUTDOWN);                        // tell the device to shutdown now
 gtimer = (gtimer << 3) + SHUTDOWNTIMER;   // set timer for shutdown
 do {                                      // start timed sequence
-  PINB = (1<<LED);                        // toggle LED
+  pinToggle(LED);                         // toggle LED
   sleep(WDT1S);                           // sleep one second
 } while (--gtimer);
-PORTB &= ~(1<<SHUTDOWN);                  // release SHUTDOWN pin
+pinLow(SHUTDOWN);                         // release SHUTDOWN pin
 GIMSK = (1<<PCIE);                        // pin change interrupts enable
 
-// turn off power
-PORTB &= ~(1<<ENABLE);                    // disable boost converter
+// Turn off power
+pinLow(ENABLE);                           // disable boost converter
 ```
 
 If the input voltage rises again above a certain threshold (POWERONLEVEL) it activates the boost converter and turns on the power to the connected device. This happens when the external power source is available again.
 When power is turned on a BOOTUPTIMER starts to count. If a shutdown is initiated before the boot up is completed, the left-over time is added to the SHUTDOWNTIMER in order to allow the connected device to completely boot up and shut down. The power to the connected device can be turned on manually by pressing the button or setting the REQUEST-line to high if the battery level is above a certain threshold (USERPOWERLEVEL) or the external power source is connected.
 
 ```c
-// check if power has to be turned on
+// Check if power has to be turned on
 while(1) {
-  PORTB |= (1<<LED);                      // heartbeat on status LED
+  pinHigh(LED);                           // heartbeat on status LED
   vcc = getVcc();                         // get supply voltage
   if (autopoweron && (vcc >= POWERONLEVEL)) break;
-  if ((~PINB & (1<<REQUEST)) && (vcc >= USERPOWERLEVEL)) break;
-  PORTB &= ~(1<<LED);                     // turn off status LED again
+  if ((!pinRead(REQUEST)) && (vcc >= USERPOWERLEVEL)) break;
+  pinLow(LED);                            // turn off status LED again
   sleep(WDT8S);                           // sleep for a while...
 }
 
-// turn on power
-PORTB |= (1<<ENABLE);                     // set enable pin of boost converter
+// Turn on power
+pinHigh(ENABLE);                          // set enable pin of boost converter
 autopoweron = 1;                          // assume auto power on by now
 gtimer = (BOOTUPTIMER >> 3) + 1;          // set timer for bootup
 ```
@@ -94,21 +94,21 @@ gtimer = (BOOTUPTIMER >> 3) + 1;          // set timer for bootup
 The ATtiny13 spends most of the time in power-down sleep mode to save energy. The watch dog timer wakes it up every 8 seconds. It will also wake up if the button was pressed or the REQUEST-line was changed (pin change interrupt). After doing its stuff the ATtiny13 sleeps again.
 
 ```c
-// watch dog timer intervals
+// Watch dog timer intervals
 #define WDT1S   (1<<WDTIE)|(1<<WDP2)|(1<<WDP1)  // WDTCR value for 1 second
 #define WDT8S   (1<<WDTIE)|(1<<WDP3)|(1<<WDP0)  // WDTCR value for 8 seconds
 
-// reset watchdog timer
+// Reset watchdog timer
 void resetWatchdog (uint8_t WDTtime) {
   cli();                                  // timed sequence coming up
+  wdt_reset();                            // reset watchdog
   MCUSR = 0;                              // clear various "reset" flags
-  WDTCR = (1<<WDCE)|(1<<WDE)|(1<<WDTIF);  // allow changes, disable reset, clear existing interrupt
+  WDTCR = (1<<WDCE)|(1<<WDE)|(1<<WDTIF);  // allow changes, clear interrupt
   WDTCR = WDTtime;                        // set interval
-  wdt_reset();                            // pat the dog
   sei();                                  // interrupts are required now
 }
 
-// go to sleep in order to save energy, wake up again by watchdog timer or pin change interrupt
+// Go to sleep in order to save energy, wake up by watchdog timer or pin change interrupt
 void sleep(uint8_t WDTtime) {
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);    // set sleep mode to power down
   GIFR |= (1<<PCIF);                      // clear any outstanding interrupts
@@ -116,16 +116,13 @@ void sleep(uint8_t WDTtime) {
   sleep_mode();                           // sleep
 }
 
-// watchdog interrupt service routine
+// Watchdog interrupt service routine
 ISR (WDT_vect) {
   wdt_disable();                          // disable watchdog
 }
 
-// pin change interrupt service routine
-EMPTY_INTERRUPT (PCINT0_vect);            // nothing to be done here
-
-// ADC interrupt service routine
-EMPTY_INTERRUPT (ADC_vect);               // nothing to be done here
+// Pin change interrupt service routine
+EMPTY_INTERRUPT(PCINT0_vect);             // nothing to be done here
 ```
 
 ## Compiling and Uploading
@@ -148,7 +145,7 @@ EMPTY_INTERRUPT (ADC_vect);               // nothing to be done here
 - Navigate to the folder with the hex-file.
 - Execute the following command (if necessary replace "usbasp" with the programmer you use):
   ```
-  avrdude -c usbasp -p t13 -U lfuse:w:0x2a:m -U hfuse:w:0xfb:m -U flash:w:main.hex
+  avrdude -c usbasp -p t13 -U lfuse:w:0x2a:m -U hfuse:w:0xff:m -U flash:w:tinyups.hex
   ```
 
 ### If using the makefile (Linux/Mac)
@@ -156,7 +153,7 @@ EMPTY_INTERRUPT (ADC_vect);               // nothing to be done here
 - Connect your programmer to your PC and to the ICSP header of the TinyUPS board.
 - Open the makefile and change the programmer if you are not using usbasp.
 - Open a terminal.
-- Navigate to the folder with the makefile and main.c.
+- Navigate to the folder with the makefile and sketch.
 - Run "make install" to compile, burn the fuses and upload the firmware.
 
 ## Scripts for the RaspberryPi
