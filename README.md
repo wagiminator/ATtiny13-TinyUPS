@@ -223,6 +223,8 @@ The current status of the tinyUPS is indicated by 5 LEDs:
 3. [Raspberry Pi Startup Script Tutorial](https://www.baldengineer.com/raspberry-pi-startup-script-tutorial.html)
 4. [Safe Shutdown for RaspberryPi](https://core-electronics.com.au/tutorials/how-to-make-a-safe-shutdown-button-for-raspberry-pi.html)
 
+![pic4.jpg](https://raw.githubusercontent.com/wagiminator/ATtiny13-TinyUPS/master/documentation/TinyUPS_pic4.jpg)
+
 # License
 ![license.png](https://i.creativecommons.org/l/by-sa/3.0/88x31.png)
 
